@@ -7,7 +7,7 @@
   if (!me) return;
   $('who').textContent = me.profile.full_name || me.profile.email;
   $('signOut').onclick = signOut;
-  if (me.profile.role === 'admin') $('adminLink').hidden = false;
+  if (me.profile.role === 'admin') { $('adminLink').hidden = false; $('demo').hidden = false; }
 
   // Tariff set by the admin
   async function loadTariff() {
