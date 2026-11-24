@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Meter · Admin</title>
+<style>
+:root{
+  --bg:#F2F4F7;--card:#fff;--border:#EAECF0;--text:#101828;--text2:#475467;--text3:#667085;
+  --brand:#1570EF;--brand-50:#EFF8FF;--red:#D92D20;--red-50:#FEF3F2;--green:#079455;--green-50:#ECFDF3;--amber:#DC6803;--amber-50:#FFFAEB;--gray-50:#F9FAFB;--gray-100:#F2F4F7;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--brand);text-decoration:none}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.topbar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.topbar .in{max-width:1240px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.logo{font-weight:700;font-size:17px}
+.logo span{font-weight:500;color:var(--text3);margin-left:6px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;background:var(--gray-100);color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:#98A2B3}
+.pill.on{background:var(--green-50);color:#067647}.pill.on .dot{background:var(--green)}
+.pill.off{background:var(--red-50);color:#B42318}.pill.off .dot{background:var(--red)}
+.pill.warn{background:var(--amber-50);color:#B54708}.pill.warn .dot{background:var(--amber)}
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid #D0D5DD;background:#fff;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.05);white-space:nowrap;display:inline-flex;align-items:center}
+.btn:hover{background:var(--gray-50)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:#175CD3}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.danger{color:#B42318}
+.page{max-width:1240px;margin:0 auto;padding:24px}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:24px;margin:0}
+.pagehead p{margin:4px 0 0;color:var(--text2)}
+.muted{color:var(--text3)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
+.stat .lbl{color:var(--text2);font-weight:600;font-size:13px}
+.stat .val{font-size:28px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.stat .val small{font-size:15px;color:var(--text3);font-weight:600;margin-left:3px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.card-h h2{font-size:16px;margin:0}
+.card-h .sub{color:var(--text3);font-size:13px}
+.card-b{padding:16px 18px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--text2);background:var(--gray-50);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right}th.num{text-align:right}
+.inp,.sel{height:34px;border:1px solid #D0D5DD;border-radius:8px;padding:0 10px;background:#fff;min-width:0}
+.inp.w{width:150px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+.apps{display:flex;gap:4px;flex-wrap:wrap}
+.app{font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--brand-50);color:#175CD3;white-space:nowrap}
+.empty{padding:22px 18px;color:var(--text3)}
+.addrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.addrow label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#344054}
+.sched{display:grid;grid-template-columns:150px 120px 120px;gap:10px 12px;align-items:center;max-width:430px}
+.sched span{font-size:13px;font-weight:600;color:#344054}
+.daybar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:16px 0 6px;max-width:640px}
+.daybar i{flex:1}
+.b-peak{background:#F04438}.b-normal{background:#84ADFF}.b-off{background:#32D583}
+.dayticks{display:flex;justify-content:space-between;max-width:640px;color:var(--text3);font-size:12px}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:13px;color:var(--text2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .lp::before{background:#F04438}.legend .ln::before{background:#84ADFF}.legend .lo::before{background:#32D583}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#101828;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="in">
+    <div class="logo">Smart Meter<span>Admin</span></div>
+    <div class="tb-right">
+      <span class="pill" id="brokerPill"><span class="dot"></span><span id="brokerTxt">Connecting</span></span>
+      <a class="btn sm" href="dashboard.html">My dashboard</a>
+      <span class="muted" id="who" style="font-size:13px"></span>
+      <button type="button" class="btn sm" id="signOut">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="pagehead">
+    <div><h1>All meters</h1><p>Live power from every meter, who each meter belongs to, and the tariff everyone sees.</p></div>
+    <div class="muted" id="clock"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="lbl">Meters registered</div><div class="val" id="sMeters">0</div></div>
+    <div class="stat"><div class="lbl">Online now</div><div class="val" id="sOnline">0</div></div>
+    <div class="stat"><div class="lbl">Total power now</div><div class="val" id="sPower">0<small>W</small></div></div>
+    <div class="stat"><div class="lbl">Costing now</div><div class="val" id="sCost">₹0.00<small>/h</small></div></div>
+  </div>
+
+  <section class="card">
+    <div class="card-h"><h2>Meters</h2><span class="sub">Updates every second while this page is open</span></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Meter</th><th>Name</th><th>User</th><th>Status</th><th class="num">Power</th><th class="num">Voltage</th>
+          <th>Appliances on</th><th class="num">Today</th><th class="num">Last seen</th><th></th>
+        </tr></thead>
+        <tbody id="meterRows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="newCard" hidden>
+    <div class="card-h"><h2>New meters found</h2><span class="sub">These meters are sending data but are not registered yet</span></div>
+    <div class="tablewrap"><table><tbody id="newRows"></tbody></table></div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <div class="card-h"><h2>Add a meter</h2></div>
+      <div class="card-b">
+        <form class="addrow" id="addForm">
+          <label>Device ID<input class="inp w mono" id="addId" placeholder="pm33-xxxxxxxx" required></label>
+          <label>Name<input class="inp w" id="addLabel" placeholder="e.g. Room 104"></label>
+          <label>User<select class="sel" id="addOwner"></select></label>
+          <button class="btn primary" type="submit">Add meter</button>
+        </form>
+        <p class="muted" style="margin:12px 0 0;font-size:13px">The device ID is printed on the meter's serial console when it starts.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>Tariff</h2><span class="sub" id="tarUpdated"></span></div>
+      <div class="card-b">
+        <form id="tarForm">
+          <div class="sched">
+            <span>City</span><input class="inp" id="city"><span></span>
+            <span>Normal rate (₹/kWh)</span><input class="inp" type="number" id="normal" step="0.01" min="0" required><span></span>
+            <span>Peak hours 1</span><input class="inp" type="time" id="p1s" required><input class="inp" type="time" id="p1e" required>
+            <span>Peak hours 2</span><input class="inp" type="time" id="p2s" required><input class="inp" type="time" id="p2e" required>
+            <span>Peak surcharge (%)</span><input class="inp" type="number" id="pPct" min="0" max="200" step="0.5" required><span></span>
+            <span>Off-peak hours</span><input class="inp" type="time" id="os" required><input class="inp" type="time" id="oe" required>
+            <span>Off-peak rebate (%)</span><input class="inp" type="number" id="oPct" min="0" max="100" step="0.5" required><span></span>
+          </div>
+          <div class="daybar" id="bars"></div>
+          <div class="dayticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+          <div class="legend"><span class="lp" id="lp">Peak</span><span class="ln" id="ln">Normal</span><span class="lo" id="lo">Off-peak</span></div>
+          <div style="margin-top:14px"><button class="btn primary" type="submit">Save tariff</button>
+            <span class="muted" style="font-size:13px;margin-left:8px">All users see the new rates straight away.</span></div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-h"><h2>Users</h2><span class="sub">People who have created an account</span></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Meters</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+(async function () {
+const $ = id => document.getElementById(id);
+const C = window.APP_CONFIG;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast = t => { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); };
+const APP_NAMES = {dryer: 'Hair dryer', straightener: 'Straightener', b200: '200 W bulb', b100: '100 W bulb'};
+
+const me = await requireLogin({admin: true});
+if (!me) return;
+$('who').textContent = me.profile.full_name || me.profile.email;
+$('signOut').onclick = signOut;
+
+let meters = [], users = [], tariff = null, todayKwh = {};
+const live = {};   // device_id -> {d, t, status}
+
+// ---------- tariff ----------
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const inWin = (t, a, b) => a === b ? false : (a < b ? t >= a && t < b : t >= a || t < b);
+function bandAt(t, f) {
+  if (inWin(t, toMin(f.p1s), toMin(f.p1e)) || inWin(t, toMin(f.p2s), toMin(f.p2e))) return 'peak';
+  if (inWin(t, toMin(f.os), toMin(f.oe))) return 'off';
+  return 'normal';
+}
+const formVals = () => ({p1s: $('p1s').value, p1e: $('p1e').value, p2s: $('p2s').value, p2e: $('p2e').value, os: $('os').value, oe: $('oe').value});
+function rateNow() {
+  if (!tariff) return 0;
+  const n = new Date(), f = {p1s: tariff.peak1_start, p1e: tariff.peak1_end, p2s: tariff.peak2_start, p2e: tariff.peak2_end, os: tariff.off_start, oe: tariff.off_end};
+  const b = bandAt(n.getHours() * 60 + n.getMinutes(), f), r = Number(tariff.normal_rate);
+  return b === 'peak' ? r * (1 + tariff.peak_pct / 100) : b === 'off' ? r * (1 - tariff.off_pct / 100) : r;
+}
+function drawBars() {
+  const f = formVals(); if (Object.values(f).some(v => !v)) return;
+  let h = ''; for (let i = 0; i < 96; i++) h += `<i class="b-${bandAt(i * 15, f)}"></i>`;
+  $('bars').innerHTML = h;
+  const r = Number($('normal').value) || 0;
+  $('lp').textContent = `Peak ₹${(r * (1 + (Number($('pPct').value) || 0) / 100)).toFixed(2)}`;
+  $('ln').textContent = `Normal ₹${r.toFixed(2)}`;
+  $('lo').textContent = `Off-peak ₹${(r * (1 - (Number($('oPct').value) || 0) / 100)).toFixed(2)}`;
+}
+async function loadTariff() {
+  const { data } = await sb.from('tariff').select('*').eq('id', 1).single();
+  tariff = data; if (!data) return;
+  $('city').value = data.city; $('normal').value = data.normal_rate;
+  $('p1s').value = data.peak1_start.slice(0, 5); $('p1e').value = data.peak1_end.slice(0, 5);
+  $('p2s').value = data.peak2_start.slice(0, 5); $('p2e').value = data.peak2_end.slice(0, 5);
+  $('pPct').value = data.peak_pct; $('os').value = data.off_start.slice(0, 5); $('oe').value = data.off_end.slice(0, 5);
+  $('oPct').value = data.off_pct;
+  $('tarUpdated').textContent = 'Last changed ' + new Date(data.updated_at).toLocaleString('en-IN');
+  drawBars();
+}
+document.querySelectorAll('#tarForm input').forEach(el => el.addEventListener('input', drawBars));
+$('tarForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const row = {city: $('city').value.trim() || 'Delhi', normal_rate: Number($('normal').value),
+    peak1_start: $('p1s').value, peak1_end: $('p1e').value, peak2_start: $('p2s').value, peak2_end: $('p2e').value,
+    peak_pct: Number($('pPct').value), off_start: $('os').value, off_end: $('oe').value, off_pct: Number($('oPct').value),
+    updated_at: new Date().toISOString(), updated_by: me.profile.id};
+  const { error } = await sb.from('tariff').update(row).eq('id', 1);
+  if (error) return toast('Could not save: ' + error.message);
+  toast('Tariff saved'); loadTariff();
+});
+
+// ---------- users and meters ----------
+async function loadUsers() {
+  const { data } = await sb.from('profiles').select('*').order('created_at');
+  users = data || [];
+  $('addOwner').innerHTML = '<option value="">Nobody yet</option>' + users.map(u => `<option value="${u.id}">${esc(u.full_name || u.email)}</option>`).join('');
+}
+async function loadMeters() {
+  const { data } = await sb.from('meters').select('*').order('created_at');
+  meters = data || [];
+  const day = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+  const { data: de } = await sb.from('daily_energy').select('device_id,kwh').eq('day', day);
+  todayKwh = Object.fromEntries((de || []).map(r => [r.device_id, Number(r.kwh)]));
+}
+const ownerName = id => { const u = users.find(x => x.id === id); return u ? (u.full_name || u.email) : ''; };
+
+function renderMeters() {
+  const tb = $('meterRows');
+  if (!meters.length) { tb.innerHTML = '<tr><td colspan="10" class="empty">No meters yet. Add one below, or register a meter from "New meters found".</td></tr>'; return; }
+  tb.innerHTML = meters.map(m => {
+    const opts = '<option value="">Nobody</option>' + users.map(u => `<option value="${u.id}"${u.id === m.owner ? ' selected' : ''}>${esc(u.full_name || u.email)}</option>`).join('');
+    return `<tr data-id="${esc(m.device_id)}">
+      <td class="mono">${esc(m.device_id)}</td>
+      <td><input class="inp" style="width:130px" value="${esc(m.label)}" data-f="label"></td>
+      <td><select class="sel" data-f="owner">${opts}</select></td>
+      <td data-c="status"></td><td class="num" data-c="p"></td><td class="num" data-c="v"></td>
+      <td data-c="apps"></td><td class="num" data-c="kwh"></td><td class="num muted" data-c="seen"></td>
+      <td><button class="btn sm danger" data-del>Remove</button></td></tr>`;
+  }).join('');
+  tb.querySelectorAll('[data-f]').forEach(el => el.addEventListener('change', async () => {
+    const id = el.closest('tr').dataset.id, f = el.dataset.f, val = el.value || null;
+    const { error } = await sb.from('meters').update({[f]: f === 'label' ? (val || '') : val}).eq('device_id', id);
+    if (error) return toast('Could not save: ' + error.message);
+    const m = meters.find(x => x.device_id === id); if (m) m[f] = f === 'label' ? (val || '') : val;
+    toast(f === 'owner' ? `Meter ${id} now belongs to ${ownerName(val) || 'nobody'}` : 'Name saved'); renderUsers();
+  }));
+  tb.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.closest('tr').dataset.id;
+    if (!confirm(`Remove meter ${id}? Its saved readings are deleted too.`)) return;
+    const { error } = await sb.from('meters').delete().eq('device_id', id);
+    if (error) return toast('Could not remove: ' + error.message);
+    meters = meters.filter(x => x.device_id !== id); renderMeters(); renderUsers(); renderNew(); toast('Meter removed');
+  }));
+  updateLive();
+}
+
+function renderUsers() {
+  $('userRows').innerHTML = users.map(u => {
+    const mine = meters.filter(m => m.owner === u.id).map(m => m.label || m.device_id);
+    const self = u.id === me.profile.id;
+    return `<tr data-uid="${u.id}"><td>${esc(u.full_name) || '<span class="muted">No name</span>'}</td><td>${esc(u.email)}</td>
+      <td>${mine.length ? esc(mine.join(', ')) : '<span class="muted">None</span>'}</td>
+      <td><select class="sel" data-role${self ? ' disabled title="You cannot change your own role"' : ''}>
+        <option value="user"${u.role === 'user' ? ' selected' : ''}>User</option><option value="admin"${u.role === 'admin' ? ' selected' : ''}>Admin</option></select></td>
+      <td class="muted">${new Date(u.created_at).toLocaleDateString('en-IN')}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">No users yet.</td></tr>';
+  $('userRows').querySelectorAll('[data-role]').forEach(s => s.addEventListener('change', async () => {
+    const uid = s.closest('tr').dataset.uid;
+    const { error } = await sb.from('profiles').update({role: s.value}).eq('id', uid);
+    if (error) return toast('Could not change role: ' + error.message);
+    const u = users.find(x => x.id === uid); if (u) u.role = s.value; toast('Role changed');
+  }));
+}
+
+function renderNew() {
+  const known = new Set(meters.map(m => m.device_id));
+  const fresh = Object.keys(live).filter(id => !known.has(id));
+  $('newCard').hidden = !fresh.length;
+  $('newRows').innerHTML = fresh.map(id => {
+    const L = live[id], p = L.d ? Math.round(Math.max(L.d.p || 0, 0)) + ' W' : '';
+    return `<tr><td class="mono">${esc(id)}</td><td class="muted">${L.status === 'offline' ? 'Offline' : 'Sending data'} ${p ? '· ' + p : ''}</td>
+      <td style="text-align:right"><button class="btn sm primary" data-reg="${esc(id)}">Register</button></td></tr>`;
+  }).join('');
+  $('newRows').querySelectorAll('[data-reg]').forEach(b => b.addEventListener('click', () => {
+    $('addId').value = b.dataset.reg; $('addLabel').focus(); $('addForm').scrollIntoView({behavior: 'smooth', block: 'center'});
+  }));
+}
+
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('addId').value.trim();
+  if (!/^[A-Za-z0-9_-]{3,32}$/.test(id)) return toast('The device ID can use letters, numbers, - and _ only');
+  const { error } = await sb.from('meters').insert({device_id: id, label: $('addLabel').value.trim(), owner: $('addOwner').value || null});
+  if (error) return toast(error.code === '23505' ? 'This meter is already registered' : 'Could not add: ' + error.message);
+  $('addForm').reset(); toast(`Meter ${id} added`);
+  await loadMeters(); renderMeters(); renderUsers(); renderNew();
+});
+
+// ---------- live data from every meter ----------
+function ago(t) { const s = Math.round((Date.now() - t) / 1000); return s < 2 ? 'just now' : s < 60 ? `${s}s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : new Date(t).toLocaleTimeString('en-IN'); }
+function statusOf(L) {
+  if (!L) return ['No data', ''];
+  if (L.t && Date.now() - L.t < 10000) return ['Online', 'on'];
+  if (L.status === 'offline') return ['Offline', 'off'];
+  return L.t ? ['No data', 'warn'] : (L.status === 'online' ? ['Online', 'on'] : ['No data', '']);
+}
+function updateLive() {
+  let online = 0, total = 0;
+  document.querySelectorAll('#meterRows tr[data-id]').forEach(tr => {
+    const L = live[tr.dataset.id], [txt, cls] = statusOf(L), q = c => tr.querySelector(`[data-c="${c}"]`);
+    const fresh = cls === 'on' && L && L.d;
+    q('status').innerHTML = `<span class="pill ${cls}"><span class="dot"></span>${txt}</span>`;
+    q('p').textContent = fresh ? `${Math.round(Math.max(L.d.p || 0, 0)).toLocaleString('en-IN')} W` : '--';
+    q('v').textContent = fresh ? `${Number(L.d.v).toFixed(1)} V` : '--';
+    const on = fresh && L.d.app ? Object.keys(APP_NAMES).filter(k => L.d.app[k]) : [];
+    q('apps').innerHTML = !fresh ? '<span class="muted">--</span>' : on.length ? `<div class="apps">${on.map(k => `<span class="app">${APP_NAMES[k]}</span>`).join('')}</div>${L.d.deciding ? ' <span class="muted" style="font-size:12px">detecting…</span>' : ''}` : '<span class="muted">None</span>';
+    const k = todayKwh[tr.dataset.id];
+    q('kwh').textContent = k != null ? `${k.toFixed(2)} kWh` : '--';
+    q('seen').textContent = L && L.t ? ago(L.t) : 'never';
+    if (cls === 'on') { online++; total += fresh ? Math.max(L.d.p || 0, 0) : 0; }
+  });
+  $('sMeters').textContent = meters.length; $('sOnline').textContent = online;
+  $('sPower').innerHTML = `${Math.round(total).toLocaleString('en-IN')}<small>W</small>`;
+  $('sCost').innerHTML = `₹${(total / 1000 * rateNow()).toFixed(2)}<small>/h</small>`;
+  $('clock').textContent = new Date().toLocaleString('en-IN', {weekday: 'short', hour: '2-digit', minute: '2-digit'});
+}
+
+const client = mqtt.connect(C.BROKER_WSS, {clientId: 'admin-' + Math.random().toString(16).slice(2, 10), reconnectPeriod: 3000, connectTimeout: 8000});
+const setBroker = (t, c) => { $('brokerTxt').textContent = t; $('brokerPill').className = 'pill ' + c; };
+client.on('connect', () => { setBroker('Live', 'on'); client.subscribe([`${C.TOPIC_ROOT}/+/data`, `${C.TOPIC_ROOT}/+/status`]); });
+client.on('reconnect', () => setBroker('Reconnecting', 'warn'));
+client.on('close', () => setBroker('Disconnected', 'off'));
+client.on('message', (topic, msg) => {
+  const parts = topic.split('/'), id = parts[parts.length - 2], kind = parts[parts.length - 1];
+  const isNew = !live[id];
+  const L = live[id] || (live[id] = {});
+  if (kind === 'status') L.status = msg.toString();
+  else { try { L.d = JSON.parse(msg.toString()); L.t = Date.now(); L.status = 'online'; } catch (e) { return; } }
+  if (isNew) renderNew();
+});
+
+await Promise.all([loadUsers(), loadTariff()]);
+await loadMeters();
+renderMeters(); renderUsers();
+setInterval(updateLive, 1000);
+setInterval(async () => { await loadMeters(); updateLive(); }, 60000);
+sb.channel('admin-meters').on('postgres_changes', {event: '*', schema: 'public', table: 'meters'}, async () => { await loadMeters(); renderMeters(); renderUsers(); renderNew(); }).subscribe();
+})();
+</script>
+</body>
+</html>

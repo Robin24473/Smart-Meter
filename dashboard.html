@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Meter · My meter</title>
+<style>
+:root{
+  --bg:#F2F4F7;--card:#fff;--border:#EAECF0;--text:#101828;--text2:#475467;--text3:#667085;
+  --brand:#1570EF;--brand-50:#EFF8FF;--brand-100:#D1E9FF;
+  --red:#D92D20;--red-50:#FEF3F2;--green:#079455;--green-50:#ECFDF3;--amber:#DC6803;--amber-50:#FFFAEB;--gray-50:#F9FAFB;--gray-100:#F2F4F7;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--brand);text-decoration:none}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+/* header */
+.topbar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.topbar .in{max-width:1240px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:28px}
+.logo{font-weight:700;font-size:17px;white-space:nowrap}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;background:var(--gray-100);color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:#98A2B3}
+.pill.on{background:var(--green-50);color:#067647}.pill.on .dot{background:var(--green)}
+.pill.off{background:var(--red-50);color:#B42318}.pill.off .dot{background:var(--red)}
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid #D0D5DD;background:#fff;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.05);white-space:nowrap}
+.btn:hover{background:var(--gray-50)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:#175CD3}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+@media(max-width:560px){.topbar .in{padding:0 14px;gap:12px}.logo{font-size:15px}#statPill .txt{display:none}}
+
+/* connect panel */
+.connect{background:#fff;border-bottom:1px solid var(--border)}
+.connect[hidden]{display:none}
+.connect form{max-width:1240px;margin:0 auto;padding:14px 24px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.connect label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--text2)}
+.inp{height:38px;padding:0 11px;border:1px solid #D0D5DD;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.inp:focus{border-color:#84CAFF;box-shadow:0 0 0 3px var(--brand-100);outline:0}
+#url{width:300px}#dev{width:170px}
+.connect .hint{flex-basis:100%;margin:0;font-size:12px;color:var(--text3)}
+@media(max-width:560px){.connect form{padding:12px 14px}.connect label,#url,#dev{width:100%}}
+
+/* page */
+.page{max-width:1240px;margin:0 auto;padding:22px 24px 40px}
+@media(max-width:560px){.page{padding:14px 12px 30px}}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.pagehead h1{margin:0;font-size:22px;font-weight:700}
+.pagehead p{margin:2px 0 0;color:var(--text3)}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.c8{grid-column:span 8}.c4{grid-column:span 4}.c12{grid-column:span 12}.c6{grid-column:span 6}
+@media(max-width:1020px){.c8,.c4,.c6{grid-column:span 12}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.card-h h2{margin:0;font-size:15px;font-weight:600}
+.card-h .sub{font-size:13px;color:var(--text3)}
+.card-b{padding:16px 18px}
+
+/* now card */
+.now{display:grid;grid-template-columns:230px 1fr;gap:10px;align-items:center}
+@media(max-width:640px){.now{grid-template-columns:1fr}}
+.watts{font-size:44px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.watts small{font-size:18px;font-weight:600;color:var(--text3);margin-left:4px}
+.kv-line{display:flex;gap:6px;color:var(--text3);font-size:13px;margin-top:8px}
+.kv-line b{color:var(--text);font-weight:600}
+.bubbles{min-height:210px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:6px}
+.bub{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;font-weight:600;line-height:1.15;padding:6px;transition:width .4s,height .4s}
+.bub svg{margin-bottom:3px}
+.bub .w{font-size:12px;font-weight:500;opacity:.9}
+.bub.dryer{background:#1570EF}.bub.straightener{background:#7A5AF8}.bub.b200{background:#EAAA08;color:#3D2A00}.bub.b100{background:#F79009;color:#3D1E00}.bub.other{background:#98A2B3}
+.empty{color:var(--text3);text-align:center;font-size:13px}
+.detect{font-size:12px;color:var(--amber);font-weight:600;min-height:16px;margin-top:6px}
+
+/* cost card */
+.costs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.costs > div{padding:14px 18px}
+.costs > div + div{border-left:1px solid var(--border)}
+.costs .lbl{font-size:13px;color:var(--text3)}
+.costs .val{font-size:24px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.costs .val2{font-size:12px;color:var(--text3)}
+.rate-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:600;background:var(--gray-100);color:var(--text2)}
+.tag.peak{background:var(--red-50);color:#B42318}.tag.off{background:var(--green-50);color:#067647}.tag.sim{background:var(--amber-50);color:#B54708}
+.tag[hidden]{display:none}
+.rate-big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.muted{color:var(--text3);font-size:13px}
+.daybar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:12px;position:relative}
+.daybar i{flex:1}.daybar i.peak{background:#FDA29B}.daybar i.off{background:#75E0A7}.daybar i.normal{background:#E4E7EC}
+.daybar .mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text);margin-left:-1px}
+.dayticks{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px}
+.cost-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.sel{height:32px;padding:0 8px;border:1px solid #D0D5DD;border-radius:8px;background:#fff;font-size:13px}
+details.rates summary{cursor:pointer;color:var(--brand);font-weight:600;font-size:13px;list-style:none}
+details.rates summary::-webkit-details-marker{display:none}
+.sched{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin-top:10px;font-size:13px;color:var(--text2)}
+.sched input{height:32px;padding:0 6px;border:1px solid #D0D5DD;border-radius:6px;width:100%}
+
+/* chart */
+.chips{display:flex;gap:6px}
+.chips button{height:28px;padding:0 10px;border-radius:14px;border:1px solid #D0D5DD;background:#fff;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--brand-50);border-color:#B2DDFF;color:#175CD3}
+.fig{height:240px;padding:12px 14px 8px}
+#cv{width:100%;height:100%;display:block}
+
+/* tips */
+.tips{list-style:none;margin:0;padding:0}
+.tip{display:grid;grid-template-columns:32px 1fr;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border)}
+.tip:last-child{border-bottom:0}
+.tip .ic{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--gray-100);color:var(--text2)}
+.sev-high .ic{background:var(--red-50);color:var(--red)}.sev-tip .ic{background:var(--amber-50);color:var(--amber)}.sev-good .ic{background:var(--green-50);color:var(--green)}.sev-info .ic{background:var(--brand-50);color:var(--brand)}
+.tip b{display:block;font-weight:600;font-size:14px}
+.tip p{margin:2px 0 0;color:var(--text2);font-size:13px}
+.tip .t{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* devices table */
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;font-weight:600;color:var(--text3);text-align:left;padding:10px 18px;background:var(--gray-50);border-bottom:1px solid var(--border)}
+td{padding:12px 18px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+th.r,td.r{text-align:right;white-space:nowrap}
+.dev{display:flex;align-items:center;gap:10px;font-weight:600}
+.dev .ico{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--gray-100);color:var(--text2)}
+.dev .ico.on{background:var(--brand-50);color:var(--brand)}
+.st{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:600;background:var(--gray-100);color:var(--text2)}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:#98A2B3}
+.st.on{background:var(--green-50);color:#067647}.st.on::before{background:var(--green)}
+@media(max-width:640px){.hide-sm{display:none}th,td{padding:10px 12px}}
+
+/* timeline */
+.tl{list-style:none;margin:0;padding:6px 18px 12px;max-height:330px;overflow:auto}
+.tl li{display:grid;grid-template-columns:72px 14px 1fr;gap:8px;align-items:start;padding:7px 0;font-size:13px}
+.tl .tm{color:var(--text3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl .d{width:10px;height:10px;border-radius:50%;margin-top:4px;border:2px solid var(--green);background:#fff}
+.tl .d.offd{border-color:#98A2B3}
+.tl .x{color:var(--text3)}
+
+/* readings */
+.reads{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+.reads > div{padding:14px 18px;border-right:1px solid var(--border)}
+.reads > div:last-child{border-right:0}
+.reads .lbl{font-size:12px;color:var(--text3)}
+.reads .val{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
+.reads .val small{font-size:12px;color:var(--text3);font-weight:500;margin-left:2px}
+@media(max-width:860px){.reads{grid-template-columns:repeat(3,minmax(0,1fr))}.reads > div:nth-child(3){border-right:0}.reads > div:nth-child(-n+3){border-bottom:1px solid var(--border)}}
+.sess{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;align-items:center}
+.sess > div{padding:12px 18px}
+.sess .lbl{font-size:12px;color:var(--text3)}.sess .val{font-weight:600;font-variant-numeric:tabular-nums}
+@media(max-width:860px){.sess{grid-template-columns:repeat(2,minmax(0,1fr))}}
+details.diag summary{cursor:pointer;padding:12px 18px;font-weight:600;color:var(--text2);border-top:1px solid var(--border)}
+#log{margin:0;padding:12px 18px 16px;max-height:220px;overflow:auto;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text2);white-space:pre-wrap;background:var(--gray-50);border-top:1px solid var(--border)}
+.foot{color:var(--text3);font-size:12px;margin-top:18px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="in">
+    <div class="logo">Smart Meter</div>
+    <div class="tb-right">
+      <span class="pill" id="statPill"><span class="dot" id="dot"></span><span class="txt" id="stat">Not connected</span></span>
+      <select class="sel" id="meterPick" hidden aria-label="Meter"></select>
+      <button type="button" class="btn sm" id="demo">Demo</button>
+      <button type="button" class="btn sm" id="openConnect" hidden>Connect</button>
+      <a class="btn sm" id="adminLink" href="admin.html" hidden style="display:inline-flex;align-items:center">Admin</a>
+      <span class="muted" id="who" style="font-size:13px"></span>
+      <button type="button" class="btn sm" id="signOut">Sign out</button>
+    </div>
+  </div>
+</header>
+<div class="connect" id="connectPanel" hidden>
+  <form id="cfg">
+    <label>Broker<input class="inp" id="url" list="brokers" value="wss://broker.emqx.io:8084/mqtt" autocomplete="off"></label>
+    <datalist id="brokers">
+      <option value="wss://broker.emqx.io:8084/mqtt">EMQX (1)</option>
+      <option value="wss://broker.hivemq.com:8884/mqtt">HiveMQ (2)</option>
+      <option value="wss://test.mosquitto.org:8081/mqtt">Mosquitto (3)</option>
+    </datalist>
+    <label>Device ID<input class="inp" id="dev" value="pm33-746d672b" placeholder="pm33-xxxxxxxx" autocomplete="off"></label>
+    <button type="submit" class="btn primary" id="go">Connect</button>
+    <button type="button" class="btn" id="closeConnect">Cancel</button>
+    <p class="hint">Both values are printed on the meter's serial console when it starts.</p>
+  </form>
+</div>
+
+<main class="page" id="overview">
+  <div class="pagehead">
+    <div><h1>Overview</h1><p id="headSub">Live readings from your PM33 meter</p></div>
+    <div class="muted">Last update: <b id="age">never</b> · Wi-Fi <b id="rssi">--</b></div>
+  </div>
+
+  <div class="grid">
+    <section class="card c8" aria-live="polite">
+      <div class="card-h"><h2>Now</h2><span class="sub" id="appNote">Waiting for data</span></div>
+      <div class="card-b now">
+        <div>
+          <div class="watts" id="pBig">--<small>W</small></div>
+          <div class="kv-line">Costing <b id="costHour">--</b></div>
+          <div class="kv-line">Devices on <b id="nOn">--</b></div>
+          <div class="detect" id="detect"></div>
+        </div>
+        <div class="bubbles" id="bubbles"><div class="empty">Devices that are on will show up here.</div></div>
+      </div>
+    </section>
+
+    <section class="card c4" id="rates">
+      <div class="costs">
+        <div><div class="lbl">Today</div><div class="val" id="todayCost">₹0.00</div><div class="val2" id="todayKwh">0.000 kWh</div></div>
+        <div><div class="lbl">This session</div><div class="val" id="sessCost">₹0.00</div><div class="val2" id="sessKwh">0.000 kWh</div></div>
+      </div>
+      <div class="card-b">
+        <div class="rate-row"><span class="muted">Current rate</span><span><span class="tag" id="band">--</span> <span class="tag sim" id="simTag" hidden>Simulated</span></span></div>
+        <div class="rate-row" style="margin-top:4px"><span class="rate-big" id="rateNow">--</span><span class="muted" id="nextChange"></span></div>
+        <div class="daybar" id="bars"><span class="mark" id="nowMark"></span></div>
+        <div class="dayticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+        <div class="cost-foot">
+          <label class="muted">Clock <select class="sel" id="clockMode">
+            <option value="real">Real time</option><option value="peak">Simulate peak</option><option value="normal">Simulate normal</option><option value="off">Simulate off-peak</option>
+          </select></label>
+          <details class="rates" hidden><summary>Edit rates</summary></details>
+          <span class="muted" id="rateSrc" style="font-size:12px"></span>
+        </div>
+        <div id="ratesBox" hidden>
+          <div class="sched">
+            <span>Normal (₹/kWh)</span><input type="number" id="tariff" step="0.1" min="0" value="8"><span></span>
+            <span>Peak 1</span><input type="time" id="pk1s" value="14:00"><input type="time" id="pk1e" value="17:00">
+            <span>Peak 2</span><input type="time" id="pk2s" value="22:00"><input type="time" id="pk2e" value="01:00">
+            <span>Peak +%</span><input type="number" id="pkPct" value="20" min="0" max="100"><span></span>
+            <span>Off-peak</span><input type="time" id="opS" value="04:00"><input type="time" id="opE" value="10:00">
+            <span>Off-peak −%</span><input type="number" id="opPct" value="20" min="0" max="100"><span></span>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+    <section class="card c8">
+      <div class="card-h"><h2 id="chartTitle">Power (W) · last 5 min</h2>
+        <div class="chips" role="group" aria-label="Quantity">
+          <button type="button" data-q="p" aria-pressed="true">Power</button>
+          <button type="button" data-q="i" aria-pressed="false">Current</button>
+          <button type="button" data-q="v" aria-pressed="false">Voltage</button>
+        </div>
+      </div>
+      <div class="fig"><canvas id="cv" aria-label="Live chart"></canvas></div>
+    </section>
+
+    <section class="card c4">
+      <div class="card-h"><h2>Tips</h2><span class="sub" id="tipCount"></span></div>
+      <ul class="tips" id="sugs"><li class="tip sev-info"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span><div><b>No tips yet</b><p>Tips show up when an appliance is on at a costly time.</p></div></li></ul>
+    </section>
+
+    <section class="card c8" id="devices">
+      <div class="card-h"><h2>Devices</h2><span class="sub">Detected on the meter</span></div>
+      <table>
+        <thead><tr><th>Device</th><th>Status</th><th class="r hide-sm">Typical</th><th class="r hide-sm">On since</th><th class="r">Used</th><th class="r">Cost</th></tr></thead>
+        <tbody id="apps"></tbody>
+      </table>
+    </section>
+
+    <section class="card c4">
+      <div class="card-h"><h2>Timeline</h2><span class="sub">This session</span></div>
+      <ul class="tl" id="timeline"><li><span class="tm">--:--</span><span></span><span class="x">No events yet</span></li></ul>
+    </section>
+
+    <section class="card c12" id="data">
+      <div class="card-h"><h2>Meter readings</h2><span class="sub">Updated every second</span></div>
+      <div class="reads" id="regs"></div>
+      <div class="sess" style="border-top:1px solid var(--border)">
+        <div><div class="lbl">Samples</div><div class="val" id="nS">0</div></div>
+        <div><div class="lbl">Highest</div><div class="val" id="peak">--</div></div>
+        <div><div class="lbl">Average</div><div class="val" id="avg">--</div></div>
+        <div><div class="lbl">Energy register</div><div class="val" id="eReg">--</div></div>
+        <div><div class="lbl">Meter uptime</div><div class="val" id="up">--</div></div>
+        <div style="display:flex;gap:8px"><button type="button" class="btn sm" id="clr">Clear</button><button type="button" class="btn sm primary" id="csv">Export CSV</button></div>
+      </div>
+      <details class="diag"><summary>Event log</summary><pre id="log"></pre></details>
+    </section>
+  </div>
+  <p class="foot">BTP project · STPM33 (X-NUCLEO-PM33A1) on NUCLEO-G071RB with ST67W611M1 Wi-Fi. Appliance detection runs on the microcontroller.</p>
+</main>
+
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const ROOT = 'btp/meter';
+const ICON = {
+  dryer: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a5.5 5.5 0 0 0 5.5 5.5H17l3-2V5l-3-2H9.5A5.5 5.5 0 0 0 4 8.5z"/><path d="M10 14l-1.5 7h3l1.5-7"/><circle cx="9.5" cy="8.5" r="2"/></svg>',
+  straightener: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21 10.5 3h1.5L10 21z"/><path d="M14 21 13.5 3h1.5l1 18z"/><path d="M9 21h8"/></svg>',
+  bulb: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>'
+};
+const TIPI = {
+  high: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+  tip: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>',
+  good: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>'
+};
+const REGS = [['v','Voltage','V',1],['i','Current','A',3],['pf','Power factor','',3],['f','Frequency','Hz',2],['q','Reactive','var',0],['s','Apparent','VA',0]];
+$('regs').innerHTML = REGS.map(([k,l,u]) => `<div><div class="lbl">${l}</div><div class="val" id="r_${k}">--<small>${u}</small></div></div>`).join('');
+
+const APPS = [['dryer','Hair dryer','~1,490 W',1490,'dryer','Dryer'],['straightener','Hair straightener','100–210 W',130,'straightener','Straightener'],
+              ['b200','200 W bulb','~227 W',227,'bulb','200 W bulb'],['b100','100 W bulb','~129 W',129,'bulb','100 W bulb']];
+const NAMES = Object.fromEntries(APPS.map(([k, n]) => [k, n]));
+$('apps').innerHTML = APPS.map(([k,n,t,,ic]) => `<tr id="a_${k}"><td><div class="dev"><span class="ico" id="ai_${k}">${ICON[ic]}</span>${n}</div></td>
+  <td><span class="st" id="as_${k}">Off</span></td><td class="r hide-sm">${t}</td><td class="r hide-sm" id="since_${k}">–</td><td class="r" id="wh_${k}">0 Wh</td><td class="r" id="rs_${k}">₹0.00</td></tr>`).join('');
+
+const lower = n => n.replace('Hair ', 'hair ');
+const listNames = ks => { const n = ks.map(k => 'the ' + lower(NAMES[k])); return n.length < 3 ? n.join(' and ') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; };
+const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+const clock = ts => new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+const devWh = {dryer: 0, straightener: 0, b200: 0, b100: 0}, devCost = {dryer: 0, straightener: 0, b200: 0, b100: 0};
+const events = [];
+let lastApp = null;
+
+function showApps(d) {
+  if (!d.app) { $('appNote').textContent = 'Needs meter firmware v0.4.0 or newer'; return; }
+  const on = APPS.filter(([k]) => d.app[k]);
+  APPS.forEach(([k]) => {
+    const v = !!d.app[k];
+    $('as_' + k).className = 'st' + (v ? ' on' : ''); $('as_' + k).textContent = v ? 'On' : 'Off';
+    $('ai_' + k).className = 'ico' + (v ? ' on' : '');
+    $('since_' + k).textContent = v && onSince[k] ? clock(onSince[k]) : '–';
+    $('wh_' + k).textContent = devWh[k] >= 1000 ? `${(devWh[k] / 1000).toFixed(2)} kWh` : `${devWh[k].toFixed(devWh[k] < 10 ? 1 : 0)} Wh`;
+    $('rs_' + k).textContent = `₹${devCost[k].toFixed(2)}`;
+  });
+  $('nOn').textContent = `${on.length} of 4`;
+  $('appNote').textContent = on.length ? on.map(a => a[1]).join(', ') : 'Nothing on';
+  $('detect').textContent = d.deciding ? 'Change detected, identifying device…' : '';
+  const key = APPS.map(([k]) => d.app[k] ? 1 : 0).join('');
+  if (lastApp !== null && key !== lastApp && !d.deciding) {
+    APPS.forEach(([k, n], j) => {
+      if (key[j] === lastApp[j]) return;
+      const turnedOn = key[j] === '1';
+      let extra = '';
+      if (!turnedOn) { const ev = [...events].reverse().find(e => e.k === k && e.on); if (ev) extra = ` after ${Math.max(1, Math.round((Date.now() - ev.t) / 60000))} min`; }
+      events.push({t: Date.now(), k, on: turnedOn, txt: `${n} turned ${turnedOn ? 'on' : 'off'}${extra}`});
+      log(`${n} turned ${turnedOn ? 'on' : 'off'}`);
+    });
+    renderTimeline();
+  }
+  if (!d.deciding) lastApp = key;
+}
+function renderTimeline() {
+  if (!events.length) return;
+  $('timeline').innerHTML = events.slice(-40).reverse().map(e =>
+    `<li><span class="tm">${clock(e.t)}</span><span class="d${e.on ? '' : ' offd'}"></span><span>${e.txt}</span></li>`).join('');
+}
+function showBubbles(d) {
+  const el = $('bubbles');
+  if (!d.app) { el.innerHTML = '<div class="empty">This firmware does not report devices.</div>'; return; }
+  const on = APPS.filter(([k]) => d.app[k]);
+  const p = Math.max(d.p || 0, 0);
+  if (!on.length) { el.innerHTML = `<div class="empty">${p < 5 ? 'Everything is off.' : `${Math.round(p)} W from devices the meter doesn't know.`}</div>`; return; }
+  const nom = on.reduce((s, a) => s + a[3], 0), scale = nom > 0 ? p / nom : 1;
+  const items = on.map(([k, n, , w, ic, sh]) => ({k, n, ic, sh, w: w * scale}));
+  const other = p - items.reduce((s, x) => s + x.w, 0);
+  const maxW = Math.max(...items.map(x => x.w), 1);
+  el.innerHTML = items.map(x => {
+    const size = Math.round(70 + 110 * Math.sqrt(x.w / maxW));
+    return `<div class="bub ${x.k}" style="width:${size}px;height:${size}px" title="${x.n}">${ICON[x.ic]}<span>${x.sh}</span><span class="w">${Math.round(x.w).toLocaleString('en-IN')} W</span></div>`;
+  }).join('') + (other > 25 ? `<div class="bub other" style="width:64px;height:64px"><span>Other</span><span class="w">${Math.round(other)} W</span></div>` : '');
+}
+
+// ---------------- tariff ----------------
+const TOD_IDS = ['pk1s','pk1e','pk2s','pk2e','pkPct','opS','opE','opPct'];
+const mins = v => { const [h, m] = (v || '0:0').split(':').map(Number); return (h * 60 + m) % 1440; };
+const inWin = (t, a, b) => a === b ? false : (a < b ? t >= a && t < b : t >= a || t < b);
+const hhmm = t => `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+let simBase = null;
+function bandAt(t) {
+  if (inWin(t, mins($('pk1s').value), mins($('pk1e').value)) || inWin(t, mins($('pk2s').value), mins($('pk2e').value))) return 'peak';
+  if (inWin(t, mins($('opS').value), mins($('opE').value))) return 'off';
+  return 'normal';
+}
+function rateOf(band) {
+  const base = parseFloat($('tariff').value) || 0;
+  if (band === 'peak') return base * (1 + (parseFloat($('pkPct').value) || 0) / 100);
+  if (band === 'off') return base * (1 - (parseFloat($('opPct').value) || 0) / 100);
+  return base;
+}
+function nowMinute() {
+  if (simBase) return Math.floor(simBase.minute + (Date.now() - simBase.at) / 60000) % 1440;
+  const d = new Date(); return d.getHours() * 60 + d.getMinutes();
+}
+function nextChange(t) {
+  const b = bandAt(t);
+  for (let k = 1; k <= 1440; k++) { const u = (t + k) % 1440; if (bandAt(u) !== b) return {at: u, band: bandAt(u), inMin: k}; }
+  return null;
+}
+const BAND_NAME = {peak: 'Peak', normal: 'Normal', off: 'Off-peak'};
+const BAND_LOWER = {peak: 'peak', normal: 'normal', off: 'off-peak'};
+function pickSimMinute(mode) {
+  if (mode === 'peak') return (mins($('pk1s').value) + 30) % 1440;
+  if (mode === 'off') return (mins($('opS').value) + 30) % 1440;
+  for (let t = 12 * 60; t < 12 * 60 + 1440; t += 15) if (bandAt(t % 1440) === 'normal') return t % 1440;
+  return 12 * 60;
+}
+function drawStrip() {
+  const bars = $('bars'), mark = $('nowMark');
+  bars.querySelectorAll('i').forEach(x => x.remove());
+  for (let t = 0; t < 1440; t += 15) { const i = document.createElement('i'); i.className = bandAt(t); bars.insertBefore(i, mark); }
+}
+function updateTariff(pW) {
+  const t = nowMinute(), band = bandAt(t), rate = rateOf(band), nx = nextChange(t);
+  $('band').textContent = BAND_NAME[band]; $('band').className = 'tag ' + band;
+  $('simTag').hidden = !simBase;
+  $('rateNow').textContent = `₹${rate.toFixed(2)}/kWh`;
+  $('nextChange').textContent = nx ? `${BAND_NAME[nx.band]} from ${hhmm(nx.at)}` : '';
+  $('costHour').textContent = pW != null ? `₹${(Math.max(pW, 0) / 1000 * rate).toFixed(2)}/h` : '--';
+  $('nowMark').style.left = `${t / 1440 * 100}%`;
+  return {t, band, rate, nx};
+}
+
+// ---------------- tips ----------------
+const onSince = {};
+let shownKeys = new Set();
+const rupees = x => `₹${x < 1 ? x.toFixed(2) : x.toFixed(1)}`;
+function suggestions(d, tar) {
+  const out = [];
+  if (!d.app) return out;
+  const on = APPS.map(([k]) => k).filter(k => d.app[k]);
+  const n = on.length, pW = Math.max(d.p || 0, 0), perHour = pW / 1000 * tar.rate;
+  const later = tar.nx ? ` ${BAND_NAME[tar.nx.band]} rate (₹${rateOf(tar.nx.band).toFixed(2)}) from ${hhmm(tar.nx.at)}.` : '';
+  const pk = parseFloat($('pkPct').value) || 0, op = parseFloat($('opPct').value) || 0;
+  if (tar.band === 'peak') {
+    if (d.app.dryer) out.push({k: 'pk-dryer', sev: 'high', b: 'Hair dryer on during peak hours',
+      s: `Rate is ₹${tar.rate.toFixed(2)}/kWh (+${pk}%). 10 minutes of drying costs about ${rupees(1.49 * tar.rate / 6)}.${later} Use it later or on a lower heat setting if you can.`});
+    if (d.app.straightener) out.push({k: 'pk-str', sev: 'high', b: 'Straightener on during peak hours',
+      s: `About ${rupees(0.15 * tar.rate)}/h at the peak rate. It keeps drawing power while hot, so switch it off when done.${later}`});
+    if (n >= 2) {
+      const msg = n === 2 ? 'Could one of them wait?' : n === 3 ? "Turn off anything you're not using." : "That's the most expensive combination. Turn off anything you're not using.";
+      out.push({k: 'pk-n' + n, sev: n === 2 ? 'tip' : 'high', b: `${n === 4 ? 'All 4' : n} devices on at peak rate`,
+        s: `${cap(listNames(on))}: ${Math.round(pW).toLocaleString('en-IN')} W, about ${rupees(perHour)}/h. ${msg}${later}`});
+    }
+  } else if (tar.band === 'normal') {
+    const soon = tar.nx && tar.nx.band === 'peak' && tar.nx.inMin <= 60;
+    if (soon && (d.app.dryer || n >= 2)) out.push({k: 'soon', sev: 'tip', b: `Peak rate starts in ${tar.nx.inMin} min`,
+      s: `From ${hhmm(tar.nx.at)} the rate goes up ${pk}% to ₹${rateOf('peak').toFixed(2)}/kWh. Try to finish with ${d.app.dryer ? 'the hair dryer' : listNames(on)} before then.`});
+    if (d.app.dryer && !soon) out.push({k: 'nrm-dryer', sev: 'info', b: 'Hair dryer on at normal rate',
+      s: `About ${rupees(1.49 * tar.rate / 6)} per 10 minutes.${tar.nx && tar.nx.band === 'peak' ? ` Peak (+${pk}%) starts at ${hhmm(tar.nx.at)}.` : tar.nx && tar.nx.band === 'off' ? ` ${op}% cheaper after ${hhmm(tar.nx.at)}.` : ''}`});
+    if (n >= 3) out.push({k: 'nrm-n' + n, sev: 'tip', b: `${n === 4 ? 'All 4' : n} devices on at once`,
+      s: `${cap(listNames(on))}: ${Math.round(pW).toLocaleString('en-IN')} W, about ${rupees(perHour)}/h.${tar.nx && tar.nx.band === 'off' ? ` ${op}% cheaper after ${hhmm(tar.nx.at)}.` : ''}`});
+  } else if (tar.band === 'off' && (d.app.dryer || n >= 2)) {
+    const peakHour = pW / 1000 * rateOf('peak');
+    out.push({k: 'off-good', sev: 'good', b: 'Good time to run appliances',
+      s: `Off-peak rate, ${op}% cheaper (₹${tar.rate.toFixed(2)}/kWh). ${cap(d.app.dryer && n === 1 ? 'the hair dryer' : listNames(on))} cost${n === 1 ? 's' : ''} ${rupees(perHour)}/h now vs ${rupees(peakHour)}/h at peak.`});
+  }
+  if (d.app.straightener && onSince.straightener && Date.now() - onSince.straightener > 15 * 60000) {
+    const m = Math.round((Date.now() - onSince.straightener) / 60000);
+    out.push({k: 'str-long', sev: 'tip', b: `Straightener on for ${m} min`, s: "Switch it off if you're done. It keeps drawing power while it stays hot."});
+  }
+  return out;
+}
+const sugSince = {};
+let lastSample = null;
+function refreshSuggestions() { if (lastSample) showSuggestions({...lastSample, deciding: 0}, updateTariff(lastSample.p)); }
+function showSuggestions(d, tar) {
+  APPS.forEach(([k]) => { if (d.app && !d.deciding) { if (d.app[k] && !onSince[k]) onSince[k] = Date.now(); if (!d.app[k]) delete onSince[k]; } });
+  const list = d.deciding ? null : suggestions(d, tar);
+  if (!list) return;
+  const keys = new Set(list.map(x => x.k));
+  list.forEach(x => { if (!sugSince[x.k]) sugSince[x.k] = Date.now(); if (!shownKeys.has(x.k) && x.sev === 'high') log('Tip: ' + x.b); });
+  Object.keys(sugSince).forEach(k => { if (!keys.has(k)) delete sugSince[k]; });
+  shownKeys = keys;
+  const el = $('sugs');
+  $('tipCount').textContent = list.length ? `${list.length} active` : '';
+  if (!d.app) { el.innerHTML = `<li class="tip sev-info"><span class="ic">${TIPI.info}</span><div><b>Needs firmware v0.4.0+</b><p>Tips use the devices the meter detects.</p></div></li>`; return; }
+  if (!list.length) {
+    el.innerHTML = `<li class="tip sev-good"><span class="ic">${TIPI.good}</span><div><b>All good</b><p>${tar.band === 'peak' ? 'Peak rate, but nothing costly is running.' : `${BAND_NAME[tar.band]} rate. Nothing power-hungry is on.`}</p></div></li>`; return;
+  }
+  const order = {high: 0, tip: 1, info: 2, good: 3};
+  el.innerHTML = list.sort((a, b) => order[a.sev] - order[b.sev]).map(x =>
+    `<li class="tip sev-${x.sev}"><span class="ic">${TIPI[x.sev]}</span><div><b>${x.b}</b><p>${x.s}</p><div class="t">Since ${clock(sugSince[x.k])}</div></div></li>`).join('');
+}
+
+// ---------------- state ----------------
+let client = null, demoT = null, quantity = 'p', lastT = 0, lastP = null;
+const buf = [], all = [];
+let sessWh = 0, sessCost = 0, peak = 0, sumP = 0;
+const today = () => new Date().toISOString().slice(0, 10);
+let day = {date: today(), wh: 0, cost: 0};
+try { const s = JSON.parse(localStorage.getItem('btpToday') || 'null'); if (s && s.date === day.date) day = s; } catch (e) {}
+
+const fmt = (x, d) => (x == null || isNaN(x)) ? '--' : Number(x).toFixed(d);
+const log = m => { const el = $('log'); el.textContent = `${new Date().toLocaleTimeString()}  ${m}\n` + el.textContent.slice(0, 4000); };
+const setStat = (txt, cls) => { $('stat').textContent = txt; $('statPill').className = 'pill ' + (cls || ''); };
+
+try {
+  const s = JSON.parse(localStorage.getItem('btpMeter') || '{}');
+  if (s.url) $('url').value = s.url; if (s.dev) $('dev').value = s.dev; if (s.tariff) $('tariff').value = s.tariff;
+  if (s.tod) TOD_IDS.forEach(k => { if (s.tod[k] != null) $(k).value = s.tod[k]; });
+  const q = new URLSearchParams(location.search).get('id'); if (q) $('dev').value = q;
+} catch (e) {}
+const save = () => { try { localStorage.setItem('btpMeter', JSON.stringify({url:$('url').value, dev:$('dev').value, tariff:$('tariff').value,
+  tod: Object.fromEntries(TOD_IDS.map(k => [k, $(k).value]))})); } catch (e) {} };
+if ($('dev').value) $('headSub').textContent = `Live readings from meter ${$('dev').value}`;
+
+function onSample(d) {
+  const now = Date.now();
+  const tar = updateTariff(d.p);
+  if (lastT && lastP != null) {
+    const dt = Math.min((now - lastT) / 1000, 5), wh = lastP * dt / 3600, c = wh / 1000 * tar.rate;
+    sessWh += wh; sessCost += c;
+    if (day.date !== today()) day = {date: today(), wh: 0, cost: 0};
+    day.wh += wh; day.cost += c;
+    if (lastSample && lastSample.app) {
+      const on = APPS.filter(([k]) => lastSample.app[k]), nom = on.reduce((s, a) => s + a[3], 0);
+      on.forEach(([k, , , w]) => { const share = nom ? wh * w / nom : 0; devWh[k] += share; devCost[k] += share / 1000 * tar.rate; });
+    }
+  }
+  lastT = now; lastP = d.p;
+  peak = Math.max(peak, d.p); sumP += d.p;
+  const row = {t: now, ...d, tariff_band: tar.band, rate_inr_kwh: +tar.rate.toFixed(3)};
+  if (d.app) APPS.forEach(([k]) => { row[k] = d.app[k] ? 1 : 0; });
+  buf.push(row); all.push(row);
+  while (buf.length && now - buf[0].t > 300000) buf.shift();
+
+  $('pBig').innerHTML = `${Math.round(Math.max(d.p, 0)).toLocaleString('en-IN')}<small>W</small>`;
+  REGS.forEach(([k,,u,dp]) => { $('r_' + k).innerHTML = `${fmt(d[k], dp)}<small>${u}</small>`; });
+  $('rssi').textContent = d.rssi ? `${d.rssi} dBm` : '--';
+  $('nS').textContent = all.length.toLocaleString('en-IN');
+  $('peak').textContent = `${fmt(peak, 0)} W`;
+  $('avg').textContent = `${fmt(sumP / all.length, 0)} W`;
+  $('eReg').textContent = `${fmt(d.e, 2)} Wh`;
+  $('up').textContent = d.up != null ? new Date(d.up * 1000).toISOString().substr(11, 8) : '--';
+  $('sessKwh').textContent = `${(sessWh / 1000).toFixed(3)} kWh`; $('sessCost').textContent = `₹${sessCost.toFixed(2)}`;
+  $('todayKwh').textContent = `${(day.wh / 1000).toFixed(3)} kWh`; $('todayCost').textContent = `₹${day.cost.toFixed(2)}`;
+  if (all.length % 10 === 0) { try { localStorage.setItem('btpToday', JSON.stringify(day)); } catch (e) {} }
+  lastSample = d;
+  showSuggestions(d, tar);
+  showApps(d);
+  showBubbles(d);
+  draw();
+}
+
+setInterval(() => {
+  if (!lastT) return;
+  const s = Math.round((Date.now() - lastT) / 1000);
+  $('age').textContent = s < 2 ? 'just now' : `${s}s ago`;
+  if (s > 10 && client) setStat('No data', 'off');
+}, 1000);
+
+function connect() {
+  stopDemo();
+  const dev = $('dev').value.trim();
+  if (!dev) { log('Enter the device ID from the serial console.'); $('dev').focus(); return; }
+  if (typeof mqtt === 'undefined') { log('MQTT library failed to load. Check your internet connection.'); return; }
+  save(); $('connectPanel').hidden = true; $('headSub').textContent = `Live readings from meter ${dev}`;
+  dropClient();
+  setStat('Connecting…');
+  client = mqtt.connect($('url').value.trim(), {clientId: 'dash-' + Math.random().toString(16).slice(2, 10), reconnectPeriod: 3000, connectTimeout: 8000});
+  const tData = `${ROOT}/${dev}/data`, tStat = `${ROOT}/${dev}/status`;
+  client.on('connect', () => { setStat('Waiting for meter', ''); log(`Connected to broker, subscribed to ${tData}`); client.subscribe([tData, tStat]); });
+  client.on('reconnect', () => setStat('Reconnecting…'));
+  client.on('error', e => log('Error: ' + e.message));
+  client.on('close', () => setStat('Disconnected', 'off'));
+  client.on('message', (topic, msg) => {
+    const txt = msg.toString();
+    if (topic === tStat) { log(`Meter ${txt}`); setStat(txt === 'online' ? 'Online' : 'Offline', txt === 'online' ? 'on' : 'off'); return; }
+    try { const d = JSON.parse(txt); setStat('Online', 'on'); onSample(d); } catch (e) { log('Bad message: ' + txt.slice(0, 80)); }
+  });
+}
+
+function dropClient() { if (client) { client.removeAllListeners(); client.end(true); client = null; } }
+function startDemo() {
+  dropClient(); stopDemo(); setStat('Demo mode', 'on'); log('Demo started'); $('connectPanel').hidden = true; $('headSub').textContent = 'Demo data (simulated meter)';
+  const SCRIPT = ['b100', 'dryer', 'straightener', 'b200', 'dryer', 'b100', 'straightener', 'b200', 'straightener', 'dryer', 'dryer', 'straightener'];
+  let k = 0, e = 0, st = {dryer: 0, straightener: 0, b200: 0, b100: 0}, step = 0, hotT = 0, dec = 0;
+  demoT = setInterval(() => {
+    k++;
+    if (k % 20 === 5) { const key = SCRIPT[step++ % SCRIPT.length]; st[key] ^= 1; dec = 3; if (key === 'straightener' && st[key]) hotT = 0; }
+    if (st.straightener) hotT++;
+    const straight = st.straightener ? 105 + 110 * Math.exp(-hotT / 60) : 0;
+    const p = 0.5 + st.dryer * 1490 + straight + st.b200 * 227 + st.b100 * 129 + (Math.random() - 0.5) * 4;
+    const v = 246 + Math.random() * 2, pf = p > 15 ? (st.straightener && !st.dryer && !st.b200 ? 0.97 : 0.998) : 0.02;
+    const s = p / Math.max(pf, 0.02); e += p / 3600;
+    onSample({seq: k, up: k, v, i: Math.max(s / v, 0.098), p, q: Math.sqrt(Math.max(s * s - p * p, 0)), s, pf, f: 49.97 + Math.random() * 0.06, e,
+              app: {...st}, deciding: dec > 0 ? 1 : 0, rssi: -52});
+    if (dec > 0) dec--;
+  }, 1000);
+}
+function stopDemo() { if (demoT) { clearInterval(demoT); demoT = null; } }
+
+// ---------------- chart ----------------
+const cv = $('cv'), ctx = cv.getContext('2d');
+const UNITS = {p: ['Power', 'W'], i: ['Current', 'A'], v: ['Voltage', 'V']};
+function nice(span) { const r = (span || 1) / 4, p = Math.pow(10, Math.floor(Math.log10(r))); return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= r); }
+function draw() {
+  const W = cv.clientWidth, H = cv.clientHeight, r = window.devicePixelRatio || 1;
+  if (!W || !H) return;
+  cv.width = W * r; cv.height = H * r; ctx.setTransform(r, 0, 0, r, 0, 0); ctx.clearRect(0, 0, W, H);
+  const L = 44, R = 4, T = 6, B = 22, pw = W - L - R, ph = H - T - B;
+  const vals = buf.map(d => d[quantity]);
+  let lo = 0, hi = Math.max(...vals, quantity === 'p' ? 10 : 0.1), step;
+  if (quantity === 'v') {
+    const mn = Math.min(...vals, 228), mx = Math.max(...vals, 232);
+    step = nice(mx - mn); lo = Math.floor(mn / step) * step; hi = lo + 4 * step;
+    if (hi < mx) { step = nice(mx - lo); hi = lo + 4 * step; }
+  } else { step = nice(hi); hi = step * 4; }
+  ctx.font = '11px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'; ctx.fillStyle = '#667085'; ctx.strokeStyle = '#EAECF0'; ctx.lineWidth = 1;
+  for (let y = lo; y <= hi + 1e-9; y += step) {
+    const py = Math.round(T + ph - (y - lo) / (hi - lo) * ph) + .5;
+    ctx.setLineDash(y === lo ? [] : [3, 3]); ctx.beginPath(); ctx.moveTo(L, py); ctx.lineTo(W - R, py); ctx.stroke();
+    ctx.textAlign = 'right'; ctx.fillText(y >= 1000 ? (y / 1000) + 'k' : +y.toFixed(2), L - 8, py + 4);
+  }
+  ctx.setLineDash([]);
+  [300, 240, 180, 120, 60, 0].forEach(s => {
+    if (W < 520 && s % 120) return;
+    ctx.textAlign = s === 0 ? 'right' : s === 300 ? 'left' : 'center';
+    ctx.fillText(s ? `-${s / 60}m` : 'now', s === 0 ? W - R : L + pw * (1 - s / 300), H - 4);
+  });
+  if (buf.length < 2) { ctx.textAlign = 'center'; ctx.fillText('No data yet', L + pw / 2, T + ph / 2); return; }
+  const now = Date.now(), X = t => L + pw * (1 - (now - t) / 300000), Y = v => T + ph - (v - lo) / (hi - lo) * ph;
+  ctx.beginPath(); buf.forEach((d, n) => n ? ctx.lineTo(X(d.t), Y(d[quantity])) : ctx.moveTo(X(d.t), Y(d[quantity])));
+  ctx.strokeStyle = '#1570EF'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.lineTo(X(buf[buf.length - 1].t), T + ph); ctx.lineTo(X(buf[0].t), T + ph); ctx.closePath();
+  const g = ctx.createLinearGradient(0, T, 0, T + ph); g.addColorStop(0, 'rgba(21,112,239,.18)'); g.addColorStop(1, 'rgba(21,112,239,0)');
+  ctx.fillStyle = g; ctx.fill();
+}
+new ResizeObserver(draw).observe(cv);
+document.querySelectorAll('.chips button').forEach(b => b.addEventListener('click', () => {
+  quantity = b.dataset.q;
+  document.querySelectorAll('.chips button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('chartTitle').textContent = `${UNITS[quantity][0]} (${UNITS[quantity][1]}) · last 5 min`; draw();
+}));
+
+// ---------------- actions ----------------
+$('csv').addEventListener('click', () => {
+  if (!all.length) { log('No readings yet.'); return; }
+  const cols = ['seq', 'up', 'v', 'i', 'p', 'q', 's', 'pf', 'f', 'e', 'dryer', 'straightener', 'b200', 'b100', 'deciding', 'tariff_band', 'rate_inr_kwh', 'rssi'];
+  const rows = ['time_iso,' + cols.join(',')].concat(all.map(d => new Date(d.t).toISOString() + ',' + cols.map(c => d[c] ?? '').join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type: 'text/csv'}));
+  a.download = `meter_${($('dev').value || 'demo')}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+$('clr').addEventListener('click', () => {
+  buf.length = all.length = 0; sessWh = sessCost = peak = sumP = 0; lastT = 0; lastP = null; events.length = 0;
+  Object.keys(devWh).forEach(k => { devWh[k] = 0; devCost[k] = 0; });
+  $('nS').textContent = '0'; $('sessKwh').textContent = '0.000 kWh'; $('sessCost').textContent = '₹0.00';
+  $('timeline').innerHTML = '<li><span class="tm">--:--</span><span></span><span class="x">No events yet</span></li>';
+  draw(); log('Session cleared');
+});
+$('openConnect').addEventListener('click', () => { const p = $('connectPanel'); p.hidden = !p.hidden; if (!p.hidden) $('dev').focus(); });
+$('closeConnect').addEventListener('click', () => { $('connectPanel').hidden = true; });
+$('cfg').addEventListener('submit', e => { e.preventDefault(); connect(); });
+$('demo').addEventListener('click', startDemo);
+document.querySelector('details.rates').addEventListener('toggle', e => { $('ratesBox').hidden = !e.target.open; });
+const tariffChanged = () => { save(); drawStrip(); if (simBase) simBase = {minute: pickSimMinute($('clockMode').value), at: Date.now()}; updateTariff(lastP); refreshSuggestions(); };
+['tariff', ...TOD_IDS].forEach(k => $(k).addEventListener('change', tariffChanged));
+$('clockMode').addEventListener('change', e => {
+  const m = e.target.value;
+  simBase = m === 'real' ? null : {minute: pickSimMinute(m), at: Date.now()};
+  log(m === 'real' ? 'Clock: real time' : `Clock: simulating ${hhmm(simBase.minute)} (${BAND_LOWER[bandAt(simBase.minute)]})`);
+  updateTariff(lastP); refreshSuggestions();
+});
+setInterval(() => updateTariff(lastP), 15000);
+drawStrip();
+updateTariff(null);
+$('todayKwh').textContent = `${(day.wh / 1000).toFixed(3)} kWh`; $('todayCost').textContent = `₹${day.cost.toFixed(2)}`;
+if (!$('dev').value) $('connectPanel').hidden = false;
+if (typeof mqtt === 'undefined') log('MQTT library failed to load (offline?). Demo still works.');
+draw();
+window.dashAPI = {
+  connect,
+  setTariff(f) { Object.entries(f).forEach(([k, v]) => { const el = $(k); if (el) el.value = v; }); tariffChanged(); },
+  setMeter(dev, url) { $('dev').value = dev; if (url) $('url').value = url; $('headSub').textContent = `Live readings from meter ${dev}`; },
+  hideConnect() { $('connectPanel').hidden = true; }
+};
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="dashboard-auth.js"></script>
+</body>
+</html>
